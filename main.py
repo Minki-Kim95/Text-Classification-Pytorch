@@ -7,6 +7,9 @@ from torch.autograd import Variable
 import torch.optim as optim
 import numpy as np
 from models.LSTM import LSTMClassifier
+from models.CNN import CNN
+
+start_time = time.time()    # store start time
 
 TEXT, vocab_size, word_embeddings, train_iter, valid_iter, test_iter = load_data.load_dataset()
 
@@ -128,3 +131,6 @@ if (torch.argmax(out[0]) == 1):
     print ("Sentiment: Positive")
 else:
     print ("Sentiment: Negative")
+
+end_time = time.time()  #store end time
+print("WorkingTime: {} sec".format(end_time-start_time))
