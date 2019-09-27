@@ -5,6 +5,8 @@ import torch.nn as nn
 from torch.autograd import Variable
 from torch.nn import functional as F
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 class RCNN(nn.Module):
 	def __init__(self, batch_size, output_size, hidden_size, vocab_size, embedding_length, weights):
 		super(RCNN, self).__init__()
@@ -62,11 +64,11 @@ class RCNN(nn.Module):
 		input = self.word_embeddings(input_sentence) # embedded input of shape = (batch_size, num_sequences, embedding_length)
 		input = input.permute(1, 0, 2) # input.size() = (num_sequences, batch_size, embedding_length)
 		if batch_size is None:
-			h_0 = Variable(torch.zeros(2, self.batch_size, self.hidden_size).cuda()) # Initial hidden state of the LSTM
-			c_0 = Variable(torch.zeros(2, self.batch_size, self.hidden_size).cuda()) # Initial cell state of the LSTM
+			h_0 = Variable(torch.zeros(2, self.batch_size, self.hidden_size).to(device)) # Initial hidden state of the LSTM
+			c_0 = Variable(torch.zeros(2, self.batch_size, self.hidden_size).to(device)) # Initial cell state of the LSTM
 		else:
-			h_0 = Variable(torch.zeros(2, batch_size, self.hidden_size).cuda())
-			c_0 = Variable(torch.zeros(2, batch_size, self.hidden_size).cuda())
+			h_0 = Variable(torch.zeros(2, batch_size, self.hidden_size).to(device))
+			c_0 = Variable(torch.zeros(2, batch_size, self.hidden_size).to(device))
 
 		output, (final_hidden_state, final_cell_state) = self.lstm(input, (h_0, c_0))
 		

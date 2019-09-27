@@ -10,6 +10,8 @@ from models.LSTM import LSTMClassifier
 
 TEXT, vocab_size, word_embeddings, train_iter, valid_iter, test_iter = load_data.load_dataset()
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 def clip_gradient(model, clip_value):
     params = list(filter(lambda p: p.grad is not None, model.parameters()))
     for p in params:
@@ -18,7 +20,14 @@ def clip_gradient(model, clip_value):
 def train_model(model, train_iter, epoch):
     total_epoch_loss = 0
     total_epoch_acc = 0
+
+    # model = torch.zeros()
+    # if torch.cuda.available():
+    #     model.cuda()
+
     # model.cuda()
+    # Now send existing model to device.
+    model = model.to(device)
     optim = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()))
     steps = 0
     model.train()
@@ -26,9 +35,12 @@ def train_model(model, train_iter, epoch):
         text = batch.text[0]
         target = batch.label
         target = torch.autograd.Variable(target).long()
-        if torch.cuda.is_available():
-            text = text.cuda()
-            target = target.cuda()
+        # if torch.cuda.is_available():
+        #     text = text.cuda()
+        #     target = target.cuda()
+        text = text.to(device)
+        target = target.to(device)
+
         if (text.size()[0] is not 32):# One of the batch returned by BucketIterator has length different than 32.
             continue
         optim.zero_grad()
@@ -60,9 +72,12 @@ def eval_model(model, val_iter):
                 continue
             target = batch.label
             target = torch.autograd.Variable(target).long()
-            if torch.cuda.is_available():
-                text = text.cuda()
-                target = target.cuda()
+            # if torch.cuda.is_available():
+            #     text = text.cuda()
+            #     target = target.cuda()
+            text = text.to(device)
+            target = target.to(device)
+
             prediction = model(text)
             loss = loss_fn(prediction, target)
             num_corrects = (torch.max(prediction, 1)[1].view(target.size()).data == target.data).sum()
@@ -104,7 +119,8 @@ test_sen2 = [[TEXT.vocab.stoi[x] for x in test_sen2]]
 test_sen = np.asarray(test_sen1)
 test_sen = torch.LongTensor(test_sen)
 test_tensor = Variable(test_sen, volatile=True)
-test_tensor = test_tensor.cuda()
+# test_tensor = test_tensor.cuda()
+test_tensor = test_tensor.to(device)
 model.eval()
 output = model(test_tensor, 1)
 out = F.softmax(output, 1)
