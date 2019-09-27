@@ -6,9 +6,29 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import torch.optim as optim
 import numpy as np
-from models.LSTM import LSTMClassifier
 from models.CNN import CNN
+from models.LSTM import LSTMClassifier
+from models.LSTM_Attn import AttentionModel
+from models.RCNN import RCNN
+from models.RNN import RNN
 
+
+def inputNumber(message):
+    while True:
+        try:
+            userInput = int(input(message))
+            if userInput < 0 or userInput >4:
+                print("out of range")
+                continue
+        except ValueError:
+            print("Not an integer! Try again.")
+            continue
+        else:
+            return userInput
+            break
+
+# MAIN PROGRAM STARTS HERE:
+choice_model = inputNumber("select Model(0: CNN, 1: LSTM, 2: LSTM_Attn, 3: RCNN, 4: RNN): ")
 start_time = time.time()    # store start time
 
 TEXT, vocab_size, word_embeddings, train_iter, valid_iter, test_iter = load_data.load_dataset()
@@ -97,7 +117,25 @@ output_size = 2
 hidden_size = 256
 embedding_length = 300
 
-model = LSTMClassifier(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+if choice_model == 0:
+    in_channels = 1
+    out_channels = 128
+    kernel_heights = [3, 4, 5]
+    stride = 1
+    padding = 0
+    keep_probab = 0.8
+    model = CNN(batch_size, output_size, in_channels, out_channels, kernel_heights, stride, padding, keep_probab, vocab_size, embedding_length, word_embeddings)
+elif choice_model ==1:
+    model = LSTMClassifier(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+elif choice_model == 2:
+    model = AttentionModel(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+elif choice_model == 3:
+    model = RCNN(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+elif choice_model == 4:
+    model = RNN(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+else:
+    print("No...")
+
 loss_fn = F.cross_entropy
 
 for epoch in range(10):
