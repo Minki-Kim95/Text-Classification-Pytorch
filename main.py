@@ -54,19 +54,25 @@ def train_model(model, train_iter, epoch):
     print("optim allocated")
     steps = 0
     model.train()
+    print("model train end")
     for idx, batch in enumerate(train_iter):
         text = batch.text[0]
+        print("TEXT")
         target = batch.label
+        print("batch label")
         target = torch.autograd.Variable(target).long()
+        print("target allocated")
         # if torch.cuda.is_available():
         #     text = text.cuda()
         #     target = target.cuda()
         text = text.to(device)
         target = target.to(device)
+        print("text and target allocated")
 
         if (text.size()[0] is not 32):# One of the batch returned by BucketIterator has length different than 32.
             continue
         optim.zero_grad()
+        print("optim zero grad")
         prediction = model(text)
         loss = loss_fn(prediction, target)
         num_corrects = (torch.max(prediction, 1)[1].view(target.size()).data == target.data).float().sum()
