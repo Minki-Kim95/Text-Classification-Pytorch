@@ -136,9 +136,9 @@ elif choice_model == 4:
     model = RNN(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
 else:
     print("No...")
-
+print("model allocated")
 loss_fn = F.cross_entropy
-
+print("loss_fn allocated")
 for epoch in range(10):
     train_loss, train_acc = train_model(model, train_iter, epoch)
     val_loss, val_acc = eval_model(model, valid_iter)
