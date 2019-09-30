@@ -141,7 +141,9 @@ loss_fn = F.cross_entropy
 print("loss_fn allocated")
 for epoch in range(10):
     train_loss, train_acc = train_model(model, train_iter, epoch)
+    print("train_loss allocated")
     val_loss, val_acc = eval_model(model, valid_iter)
+    print("val_loss allocated")
     
     print(f'Epoch: {epoch+1:02}, Train Loss: {train_loss:.3f}, Train Acc: {train_acc:.2f}%, Val. Loss: {val_loss:3f}, Val. Acc: {val_acc:.2f}%')
     
