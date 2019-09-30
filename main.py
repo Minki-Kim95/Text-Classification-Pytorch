@@ -45,14 +45,13 @@ def train_model(model, train_iter, epoch):
     total_epoch_loss = 0
     total_epoch_acc = 0
 
-    # model = torch.zeros()
-    # if torch.cuda.available():
-    #     model.cuda()
-
     # model.cuda()
     # Now send existing model to device.
+    print("total epoch loss allocated")
     model = model.to(device)
+    print("device allocated")
     optim = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()))
+    print("optim allocated")
     steps = 0
     model.train()
     for idx, batch in enumerate(train_iter):
