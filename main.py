@@ -32,8 +32,9 @@ choice_model = inputNumber("select Model(0: CNN, 1: LSTM, 2: LSTM_Attn, 3: RCNN,
 start_time = time.time()    # store start time
 
 TEXT, vocab_size, word_embeddings, train_iter, valid_iter, test_iter = load_data.load_dataset()
-
+print("load is end")
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print("device setting is end")
 
 def clip_gradient(model, clip_value):
     params = list(filter(lambda p: p.grad is not None, model.parameters()))
