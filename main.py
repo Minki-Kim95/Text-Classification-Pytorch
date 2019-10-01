@@ -74,12 +74,19 @@ def train_model(model, train_iter, epoch):
         optim.zero_grad()
         print("optim zero grad")
         prediction = model(text)
+        print("pridiction")
         loss = loss_fn(prediction, target)
+        print("loss")
         num_corrects = (torch.max(prediction, 1)[1].view(target.size()).data == target.data).float().sum()
+        print("num_correscts")
         acc = 100.0 * num_corrects/len(batch)
+        print("acc")
         loss.backward()
+        print("backward")
         clip_gradient(model, 1e-1)
+        print("clop gradient")
         optim.step()
+        print("optim step")
         steps += 1
         
         if steps % 100 == 0:
