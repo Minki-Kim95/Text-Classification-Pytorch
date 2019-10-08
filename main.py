@@ -6,7 +6,8 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import torch.optim as optim
 import numpy as np
-from models.CNN import CNN
+from models.CNN_2D import CNN_2D
+from models.CNN_1D import CNN_1D
 from models.LSTM import LSTMClassifier
 from models.LSTM_Attn import AttentionModel
 from models.RCNN import RCNN
@@ -17,7 +18,7 @@ def inputNumber(message):
     while True:
         try:
             userInput = int(input(message))
-            if userInput < 0 or userInput >4:
+            if userInput < 0 or userInput >5:
                 print("out of range")
                 continue
         except ValueError:
@@ -25,16 +26,13 @@ def inputNumber(message):
             continue
         else:
             return userInput
-            break
 
 # MAIN PROGRAM STARTS HERE:
-choice_model = inputNumber("select Model(0: CNN, 1: LSTM, 2: LSTM_Attn, 3: RCNN, 4: RNN): ")
+choice_model = inputNumber("select Model(0: CNN(2D), 1: CNN(1D) 2: LSTM, 3: LSTM_Attn, 4: RCNN, 5: RNN): ")
 start_time = time.time()    # store start time
 
 TEXT, vocab_size, word_embeddings, train_iter, valid_iter, test_iter = load_data.load_dataset()
-print("load is end")
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print("device setting is end")
 
 def clip_gradient(model, clip_value):
     params = list(filter(lambda p: p.grad is not None, model.parameters()))
@@ -47,46 +45,33 @@ def train_model(model, train_iter, epoch):
 
     # model.cuda()
     # Now send existing model to device.
-    print("total epoch loss allocated")
     model = model.to(device)
-    print("device allocated")
     optim = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()))
-    print("optim allocated")
     steps = 0
     model.train()
-    print("model train end")
     for idx, batch in enumerate(train_iter):
         text = batch.text[0]
-        print("TEXT")
         target = batch.label
-        print("batch label")
         target = torch.autograd.Variable(target).long()
-        print("target allocated")
         # if torch.cuda.is_available():
         #     text = text.cuda()
         #     target = target.cuda()
         text = text.to(device)
         target = target.to(device)
-        print("text and target allocated")
 
         if (text.size()[0] is not 32):# One of the batch returned by BucketIterator has length different than 32.
             continue
         optim.zero_grad()
-        print("optim zero grad")
         prediction = model(text)
-        print("pridiction")
         loss = loss_fn(prediction, target)
-        print("loss")
         num_corrects = (torch.max(prediction, 1)[1].view(target.size()).data == target.data).float().sum()
-        print("num_correscts")
         acc = 100.0 * num_corrects/len(batch)
-        print("acc")
         loss.backward()
-        print("backward")
+        # print("backward")
         clip_gradient(model, 1e-1)
-        print("clop gradient")
+        # print("clop gradient")
         optim.step()
-        print("optim step")
+        # print("optim step")
         steps += 1
         
         if steps % 100 == 0:
@@ -137,25 +122,31 @@ if choice_model == 0:
     stride = 1
     padding = 0
     keep_probab = 0.8
-    model = CNN(batch_size, output_size, in_channels, out_channels, kernel_heights, stride, padding, keep_probab, vocab_size, embedding_length, word_embeddings)
-elif choice_model ==1:
+    model = CNN_2D(batch_size, output_size, in_channels, out_channels, kernel_heights, stride, padding, keep_probab, vocab_size, embedding_length, word_embeddings)
+elif choice_model == 1:
+    in_channels = 1
+    out_channels = 128
+    kernel_heights = [3, 4, 5]
+    stride = 1
+    padding = 0
+    keep_probab = 0.8
+    model = CNN_1D(batch_size, output_size, in_channels, out_channels, kernel_heights, stride, padding, keep_probab, vocab_size, embedding_length, word_embeddings)
+elif choice_model ==2:
     model = LSTMClassifier(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
-elif choice_model == 2:
-    model = AttentionModel(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
 elif choice_model == 3:
-    model = RCNN(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+    model = AttentionModel(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
 elif choice_model == 4:
+    model = RCNN(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+elif choice_model == 5:
     model = RNN(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
 else:
-    print("No...")
-print("model allocated")
+    model = LSTMClassifier(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+    print("Use LSTM as default")
+
 loss_fn = F.cross_entropy
-print("loss_fn allocated")
 for epoch in range(10):
     train_loss, train_acc = train_model(model, train_iter, epoch)
-    print("train_loss allocated")
     val_loss, val_acc = eval_model(model, valid_iter)
-    print("val_loss allocated")
     
     print(f'Epoch: {epoch+1:02}, Train Loss: {train_loss:.3f}, Train Acc: {train_acc:.2f}%, Val. Loss: {val_loss:3f}, Val. Acc: {val_acc:.2f}%')
     

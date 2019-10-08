@@ -3,3 +3,4 @@
 .vector_cache
 __pycache__
 models?__pycache__
+venv

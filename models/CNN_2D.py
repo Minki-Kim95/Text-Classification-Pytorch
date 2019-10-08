@@ -5,9 +5,9 @@ import torch.nn as nn
 from torch.autograd import Variable
 from torch.nn import functional as F
 
-class CNN(nn.Module):
+class CNN_2D(nn.Module):
 	def __init__(self, batch_size, output_size, in_channels, out_channels, kernel_heights, stride, padding, keep_probab, vocab_size, embedding_length, weights):
-		super(CNN, self).__init__()
+		super(CNN_2D, self).__init__()
 		
 		"""
 		Arguments
