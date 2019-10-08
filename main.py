@@ -27,13 +27,6 @@ def inputNumber(message):
         else:
             return userInput
 
-# MAIN PROGRAM STARTS HERE:
-choice_model = inputNumber("select Model(0: CNN(2D), 1: CNN(1D) 2: LSTM, 3: LSTM_Attn, 4: RCNN, 5: RNN): ")
-start_time = time.time()    # store start time
-
-TEXT, vocab_size, word_embeddings, train_iter, valid_iter, test_iter = load_data.load_dataset()
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 def clip_gradient(model, clip_value):
     params = list(filter(lambda p: p.grad is not None, model.parameters()))
     for p in params:
@@ -53,11 +46,12 @@ def train_model(model, train_iter, epoch):
         text = batch.text[0]
         target = batch.label
         target = torch.autograd.Variable(target).long()
+
+        text = text.to(device)
+        target = target.to(device)
         # if torch.cuda.is_available():
         #     text = text.cuda()
         #     target = target.cuda()
-        text = text.to(device)
-        target = target.to(device)
 
         if (text.size()[0] is not 32):# One of the batch returned by BucketIterator has length different than 32.
             continue
@@ -108,6 +102,12 @@ def eval_model(model, val_iter):
 
     return total_epoch_loss/len(val_iter), total_epoch_acc/len(val_iter)
 	
+# MAIN PROGRAM STARTS HERE:
+choice_model = inputNumber("select Model(0: CNN(2D), 1: CNN(1D) 2: LSTM, 3: LSTM_Attn, 4: RCNN, 5: RNN): ")
+start_time = time.time()    # store start time
+
+TEXT, vocab_size, word_embeddings, train_iter, valid_iter, test_iter = load_data.load_dataset()
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 learning_rate = 2e-5
 batch_size = 32
@@ -123,6 +123,7 @@ if choice_model == 0:
     padding = 0
     keep_probab = 0.8
     model = CNN_2D(batch_size, output_size, in_channels, out_channels, kernel_heights, stride, padding, keep_probab, vocab_size, embedding_length, word_embeddings)
+
 elif choice_model == 1:
     in_channels = 1
     out_channels = 128
@@ -131,17 +132,29 @@ elif choice_model == 1:
     padding = 0
     keep_probab = 0.8
     model = CNN_1D(batch_size, output_size, in_channels, out_channels, kernel_heights, stride, padding, keep_probab, vocab_size, embedding_length, word_embeddings)
+
 elif choice_model ==2:
     model = LSTMClassifier(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+
 elif choice_model == 3:
     model = AttentionModel(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+
 elif choice_model == 4:
     model = RCNN(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+
 elif choice_model == 5:
     model = RNN(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+
 else:
-    model = LSTMClassifier(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
-    print("Use LSTM as default")
+    in_channels = 1
+    out_channels = 128
+    kernel_heights = [3, 4, 5]
+    stride = 1
+    padding = 0
+    keep_probab = 0.8
+    model = CNN_1D(batch_size, output_size, in_channels, out_channels, kernel_heights, stride, padding, keep_probab,
+                   vocab_size, embedding_length, word_embeddings)
+    print("Use CNN 1D as default")
 
 loss_fn = F.cross_entropy
 for epoch in range(10):
@@ -169,8 +182,10 @@ with torch.no_grad():
     test_sen = torch.LongTensor(test_sen)
     test_tensor = test_sen
 # test_tensor = Variable(test_sen, volatile=True)
-# test_tensor = test_tensor.cuda()
+
 test_tensor = test_tensor.to(device)
+# test_tensor = test_tensor.cuda()
+
 model.eval()
 output = model(test_tensor, 1)
 out = F.softmax(output, 1)
@@ -180,4 +195,4 @@ else:
     print ("Sentiment: Negative")
 
 end_time = time.time()  #store end time
-print("WorkingTime: {} sec".format(end_time-start_time))
+print("WorkingTime: {} sec".format(end_time - start_time))
